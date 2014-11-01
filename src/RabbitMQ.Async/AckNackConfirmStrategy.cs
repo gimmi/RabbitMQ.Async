@@ -10,13 +10,11 @@ namespace RabbitMQ.Async
 	internal class AckNackConfirmStrategy : IConfirmStrategy
 	{
 		private readonly ConcurrentDictionary<ulong, TaskCompletionSource<object>> _pending;
-		private readonly IEventNotifier _notifier;
 		private ulong _publishSeqNo;
 
-		public AckNackConfirmStrategy(IEventNotifier notifier)
+		public AckNackConfirmStrategy()
 		{
 			_pending = new ConcurrentDictionary<ulong, TaskCompletionSource<object>>();
-			_notifier = notifier;
 		}
 
 		public void ChannelCreated(IModel channel)
@@ -45,7 +43,6 @@ namespace RabbitMQ.Async
 				if (_pending.TryRemove(seqNo, out tcs))
 				{
 					tcs.TrySetException(new RabbitNackException());
-					_notifier.NotifyNacked();
 				}
 			}
 		}
@@ -58,7 +55,6 @@ namespace RabbitMQ.Async
 				if (_pending.TryRemove(seqNo, out tcs))
 				{
 					tcs.TrySetResult(null);
-					_notifier.NotifyAcked();
 				}
 			}
 		}
@@ -80,7 +76,6 @@ namespace RabbitMQ.Async
 			foreach (var kvp in _pending)
 			{
 				kvp.Value.TrySetException(new RabbitUnackException());
-				_notifier.NotifyUnacked();
 			}
 			_pending.Clear();
 		}

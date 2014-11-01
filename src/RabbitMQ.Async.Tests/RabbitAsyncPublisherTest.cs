@@ -30,8 +30,7 @@ namespace RabbitMQ.Async.Tests
 		[Test]
 		public void Should_publish_all_messages_from_all_threads()
 		{
-			var notifier = new CounterEventNotifier();
-			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri }, notifier);
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri });
 
 			var tasks = Enumerable.Range(0, 10000)
 				.AsParallel()
@@ -44,35 +43,33 @@ namespace RabbitMQ.Async.Tests
 
 			var messages = TestUtils.GetAllMessages(Exchange).ToArray();
 			Assert.That(messages, Has.Length.EqualTo(10000));
-			Assert.That(notifier.ToString(), Is.EqualTo("enqueued: 10000, sent: 10000, failed: 0, canceled: 0, acked: 10000, nacked: 0, unacked: 0"));
 			Assert.That(tasks.All(x => x.IsCompleted), Is.True);
 		}
 
 		[Test]
 		public void Should_cancel_pending_and_unack_sent_when_disposing()
 		{
-			var notifier = new CounterEventNotifier();
-			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri }, notifier);
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri });
 
-			for (int i = 0; i < 10000; i++)
+			var tasks = new Task[10000];
+			for (int i = 0; i < tasks.Length; i++)
 			{
-				sut.PublishAsync(Exchange, _message);
+				tasks[i] = sut.PublishAsync(Exchange, _message);
 			}
+
+			Assert.That(tasks.Count(x => x.IsCompleted), Is.LessThan(10));
 
 			sut.Dispose();
 
-			Console.Write(notifier);
-
-			Assert.That(notifier.Canceled, Is.GreaterThanOrEqualTo(9990));
-			Assert.That(notifier.Sent, Is.LessThanOrEqualTo(10));
-			Assert.That(notifier.Sent + notifier.Canceled, Is.EqualTo(10000));
+			Assert.That(tasks.Count(x => x.IsCanceled), Is.LessThan(10000));
+			Assert.That(tasks.Count(x => x.IsFaulted), Is.EqualTo(0));
+			Assert.That(tasks.Count(x => x.IsCompleted), Is.EqualTo(10000));
 		}
 
 		[Test]
 		public void Should_fail_task_when_fail_send()
 		{
-			var notifier = new CounterEventNotifier();
-			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = "amqp://fake:5672/" }, notifier);
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = "amqp://fake:5672/" });
 			try
 			{
 				sut.PublishAsync(Exchange, _message).Wait();
@@ -84,15 +81,12 @@ namespace RabbitMQ.Async.Tests
 				Assert.That(ae.Flatten().InnerException, Is.InstanceOf<BrokerUnreachableException>());
 			}
 			sut.Dispose();
-
-			Assert.That(notifier.ToString(), Is.EqualTo("enqueued: 1, sent: 0, failed: 1, canceled: 0, acked: 0, nacked: 0, unacked: 0"));
 		}
 
 		[Test, Ignore("need elevated user")]
 		public void Should_discard_messages_that_failed_send()
 		{
-			var notifier = new CounterEventNotifier();
-			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri }, notifier);
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri });
 
 			var m1 = sut.PublishAsync(Exchange, Encoding.UTF8.GetBytes("M1"));
 			Assert.That(m1.IsCompleted, Is.False);
@@ -122,7 +116,6 @@ namespace RabbitMQ.Async.Tests
                 "M1",
                 "M3"
             }));
-			Assert.That(notifier.ToString(), Is.EqualTo("enqueued: 3, sent: 2, failed: 1, canceled: 0, acked: 2, nacked: 0, unacked: 0"));
 		}
 	}
 }

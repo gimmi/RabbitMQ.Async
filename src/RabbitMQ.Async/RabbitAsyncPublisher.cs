@@ -12,15 +12,13 @@ namespace RabbitMQ.Async
 		private readonly IConfirmStrategy _confirmStrategy;
 		private readonly Thread _thread;
 		private readonly IConnectionFactory _connectionFactory;
-		private readonly IEventNotifier _notifier;
 
-		public RabbitAsyncPublisher(IConnectionFactory connectionFactory, IEventNotifier notifier, bool publisherConfirms = true)
+		public RabbitAsyncPublisher(IConnectionFactory connectionFactory, bool publisherConfirms = true)
 		{
-			_notifier = notifier;
-			_queue = new BlockingCollection<EnqueuedMessage>();
-			_confirmStrategy = publisherConfirms ? (IConfirmStrategy) new AckNackConfirmStrategy(_notifier) : new NoConfirmStrategy();
-
 			_connectionFactory = connectionFactory;
+
+			_queue = new BlockingCollection<EnqueuedMessage>();
+			_confirmStrategy = publisherConfirms ? (IConfirmStrategy) new AckNackConfirmStrategy() : new NoConfirmStrategy();
 
 			_thread = new Thread(ThreadLoop) { Name = typeof(RabbitAsyncPublisher).Name };
 			_thread.Start();
@@ -42,7 +40,6 @@ namespace RabbitMQ.Async
 				RoutingKey = routingKey, 
 				Tcs = tcs
 			});
-			_notifier.NotifyEnqueued();
 			return tcs.Task;
 		}
 
@@ -55,7 +52,6 @@ namespace RabbitMQ.Async
 				if (_queue.IsAddingCompleted)
 				{
 					msg.Tcs.TrySetCanceled();
-					_notifier.NotifyCanceled();
 				}
 				else
 				{
@@ -67,11 +63,9 @@ namespace RabbitMQ.Async
 						_confirmStrategy.Publishing(channel);
 						channel.BasicPublish(msg.Exchange, msg.RoutingKey, basicProperties, msg.Body);
 						_confirmStrategy.Published(msg.Tcs);
-						_notifier.NotifySent();
 					}
 					catch (Exception e)
 					{
-						_notifier.NotifyFailed();
 						msg.Tcs.TrySetException(e);
 						SafeDispose(ref connection, ref channel);
 					}
