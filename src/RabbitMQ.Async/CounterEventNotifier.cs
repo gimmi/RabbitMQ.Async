@@ -2,7 +2,7 @@
 
 namespace RabbitMQ.Async
 {
-	public class Statistics
+	public class CounterEventNotifier : IEventNotifier
 	{
 		private long _acked;
 		private long _enqueued;
@@ -47,37 +47,37 @@ namespace RabbitMQ.Async
 			get { return _canceled; }
 		}
 
-		internal void NotifyEnqueued()
+		public void NotifyEnqueued()
 		{
 			Interlocked.Increment(ref _enqueued);
 		}
 
-		internal void NotifySent()
+		public void NotifySent()
 		{
 			Interlocked.Increment(ref _sent);
 		}
 
-		internal void NotifyFailed()
+		public void NotifyFailed()
 		{
 			Interlocked.Increment(ref _failed);
 		}
 
-		internal void NotifyAcked()
+		public void NotifyAcked()
 		{
 			Interlocked.Increment(ref _acked);
 		}
 
-		internal void NotifyNacked()
+		public void NotifyNacked()
 		{
 			Interlocked.Increment(ref _nacked);
 		}
 
-		internal void NotifyUnacked()
+		public void NotifyUnacked()
 		{
 			Interlocked.Increment(ref _unacked);
 		}
 
-		internal void NotifyCanceled()
+		public void NotifyCanceled()
 		{
 			Interlocked.Increment(ref _canceled);
 		}

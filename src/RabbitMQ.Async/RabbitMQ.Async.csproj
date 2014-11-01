@@ -40,12 +40,14 @@
   <ItemGroup>
     <Compile Include="AckNackConfirmStrategy.cs" />
     <Compile Include="IConfirmStrategy.cs" />
-    <Compile Include="NullConfirmStrategy.cs" />
+    <Compile Include="IEventNotifier.cs" />
+    <Compile Include="NoConfirmStrategy.cs" />
+    <Compile Include="NullEventNotifier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RabbitAsyncPublisher.cs" />
     <Compile Include="RabbitNackException.cs" />
     <Compile Include="RabbitUnackException.cs" />
-    <Compile Include="Statistics.cs" />
+    <Compile Include="CounterEventNotifier.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

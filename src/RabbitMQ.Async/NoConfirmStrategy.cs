@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 
 namespace RabbitMQ.Async
 {
-	internal class NullConfirmStrategy : IConfirmStrategy
+	internal class NoConfirmStrategy : IConfirmStrategy
 	{
 		public void ChannelCreated(IModel channel)
 		{
