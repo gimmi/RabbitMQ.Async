@@ -1,0 +1,12 @@
+# Visual Studio stuff
+/src/*.user
+/src/*.suo
+/src/*/bin/
+/src/*/obj/
+/src/*/*.user
+
+# ReSharper stuff
+/src/_ReSharper.*
+
+# Managed by NuGet
+/packages/
