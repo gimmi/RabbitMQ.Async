@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,11 +30,11 @@ namespace RabbitMQ.Async.Tests
 		[Test]
 		public void Should_publish_all_messages_from_all_threads()
 		{
-			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri }, Exchange);
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri });
 
 			var tasks = Enumerable.Range(0, 10000)
 				.AsParallel()
-				.Select(i => sut.PublishAsync(_message))
+				.Select(i => sut.PublishAsync(Exchange, _message))
 				.ToArray();
 
 			Task.WaitAll(tasks);
@@ -51,11 +50,11 @@ namespace RabbitMQ.Async.Tests
 		[Test]
 		public void Should_cancel_pending_and_unack_sent_when_disposing()
 		{
-			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri }, Exchange);
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri });
 
 			for (int i = 0; i < 10000; i++)
 			{
-				sut.PublishAsync(_message);
+				sut.PublishAsync(Exchange, _message);
 			}
 
 			sut.Dispose();
@@ -65,16 +64,15 @@ namespace RabbitMQ.Async.Tests
 			Assert.That(sut.Statistics.Canceled, Is.GreaterThanOrEqualTo(9990));
 			Assert.That(sut.Statistics.Sent, Is.LessThanOrEqualTo(10));
 			Assert.That(sut.Statistics.Sent + sut.Statistics.Canceled, Is.EqualTo(10000));
-
 		}
 
 		[Test]
 		public void Should_fail_task_when_fail_send()
 		{
-			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = "amqp://fake:5672/" }, Exchange);
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = "amqp://fake:5672/" });
 			try
 			{
-				sut.PublishAsync(_message).Wait();
+				sut.PublishAsync(Exchange, _message).Wait();
 				Assert.Fail();
 			}
 			catch (AggregateException ae)
@@ -90,21 +88,21 @@ namespace RabbitMQ.Async.Tests
 		[Test]
 		public void Should_discard_messages_that_failed_send()
 		{
-			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri }, Exchange);
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri });
 
-			var m1 = sut.PublishAsync(Encoding.UTF8.GetBytes("M1"));
+			var m1 = sut.PublishAsync(Exchange, Encoding.UTF8.GetBytes("M1"));
 			Assert.That(m1.IsCompleted, Is.False);
 
 			Process.Start("SC", "STOP RabbitMQ");
 			Thread.Sleep(TimeSpan.FromSeconds(3));
 
-			var m2 = sut.PublishAsync(Encoding.UTF8.GetBytes("M2"));
+			var m2 = sut.PublishAsync(Exchange, Encoding.UTF8.GetBytes("M2"));
 			Assert.That(m2.IsCompleted, Is.False);
 
 			Process.Start("SC", "START RabbitMQ");
 			Thread.Sleep(TimeSpan.FromSeconds(3));
 
-			var m3 = sut.PublishAsync(Encoding.UTF8.GetBytes("M3"));
+			var m3 = sut.PublishAsync(Exchange, Encoding.UTF8.GetBytes("M3"));
 			Assert.That(m3.IsCompleted, Is.False);
 
 			m1.Wait();

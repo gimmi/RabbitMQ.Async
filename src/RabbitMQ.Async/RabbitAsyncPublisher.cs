@@ -8,21 +8,19 @@ namespace RabbitMQ.Async
 {
 	public class RabbitAsyncPublisher : IDisposable
 	{
-		private readonly string _exchange;
 		private readonly BlockingCollection<EnqueuedMessage> _queue;
 		private readonly AckNackConfirmStrategy _confirmStrategy;
 		private readonly Thread _thread;
 		private readonly IConnectionFactory _connectionFactory;
 		private readonly Statistics _stats;
 
-		public RabbitAsyncPublisher(IConnectionFactory connectionFactory, string exchange)
+		public RabbitAsyncPublisher(IConnectionFactory connectionFactory)
 		{
 			_stats = new Statistics();
 			_queue = new BlockingCollection<EnqueuedMessage>();
 			_confirmStrategy = new AckNackConfirmStrategy(_stats);
 
 			_connectionFactory = connectionFactory;
-			_exchange = exchange;
 
 			_thread = new Thread(ThreadLoop) { Name = typeof(RabbitAsyncPublisher).Name };
 			_thread.Start();
@@ -40,10 +38,15 @@ namespace RabbitMQ.Async
 			_queue.Dispose();
 		}
 
-		public Task PublishAsync(byte[] body)
+		public Task PublishAsync(string exchange, byte[] body, string routingKey = "")
 		{
 			var tcs = new TaskCompletionSource<object>();
-			_queue.Add(new EnqueuedMessage { Body = body, Tcs = tcs });
+			_queue.Add(new EnqueuedMessage {
+				Exchange = exchange, 
+				Body = body, 
+				RoutingKey = routingKey, 
+				Tcs = tcs
+			});
 			_stats.NotifyEnqueued();
 			return tcs.Task;
 		}
@@ -67,7 +70,7 @@ namespace RabbitMQ.Async
 						IBasicProperties basicProperties = channel.CreateBasicProperties();
 						basicProperties.SetPersistent(true);
 						_confirmStrategy.Publishing(channel);
-						channel.BasicPublish(_exchange, "", basicProperties, msg.Body);
+						channel.BasicPublish(msg.Exchange, msg.RoutingKey, basicProperties, msg.Body);
 						_confirmStrategy.Published(msg.Tcs);
 						_stats.NotifySent();
 					}
@@ -123,6 +126,8 @@ namespace RabbitMQ.Async
 		{
 			public byte[] Body { get; set; }
 			public TaskCompletionSource<object> Tcs { get; set; }
+			public string Exchange { get; set; }
+			public string RoutingKey { get; set; }
 		}
 	}
 }
