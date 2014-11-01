@@ -9,16 +9,16 @@ namespace RabbitMQ.Async
 	public class RabbitAsyncPublisher : IDisposable
 	{
 		private readonly BlockingCollection<EnqueuedMessage> _queue;
-		private readonly AckNackConfirmStrategy _confirmStrategy;
+		private readonly IConfirmStrategy _confirmStrategy;
 		private readonly Thread _thread;
 		private readonly IConnectionFactory _connectionFactory;
 		private readonly Statistics _stats;
 
-		public RabbitAsyncPublisher(IConnectionFactory connectionFactory)
+		public RabbitAsyncPublisher(IConnectionFactory connectionFactory, bool publisherConfirms = true)
 		{
 			_stats = new Statistics();
 			_queue = new BlockingCollection<EnqueuedMessage>();
-			_confirmStrategy = new AckNackConfirmStrategy(_stats);
+			_confirmStrategy = publisherConfirms ? (IConfirmStrategy) new AckNackConfirmStrategy(_stats) : new NullConfirmStrategy();
 
 			_connectionFactory = connectionFactory;
 
