@@ -10,3 +10,7 @@
 
 # Managed by NuGet
 /packages/
+
+# build related
+/tools/*/
+/src/SharedAssemblyInfo.cs
