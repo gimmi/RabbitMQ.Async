@@ -42,6 +42,7 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AckNackConfirmStrategy.cs" />
+    <Compile Include="ConnectionHolder.cs" />
     <Compile Include="IConfirmStrategy.cs" />
     <Compile Include="NoConfirmStrategy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -11,16 +11,15 @@ namespace RabbitMQ.Async
 		private readonly BlockingCollection<EnqueuedMessage> _queue;
 		private readonly IConfirmStrategy _confirmStrategy;
 		private readonly Thread _thread;
-		private readonly IConnectionFactory _connectionFactory;
+		private readonly ConnectionHolder _connectionHolder;
 
 		public RabbitAsyncPublisher(IConnectionFactory connectionFactory, bool publisherConfirms = true)
 		{
-			_connectionFactory = connectionFactory;
-
 			_queue = new BlockingCollection<EnqueuedMessage>();
 			_confirmStrategy = publisherConfirms ? (IConfirmStrategy) new AckNackConfirmStrategy() : new NoConfirmStrategy();
+			_connectionHolder = new ConnectionHolder(new[] {connectionFactory}, _confirmStrategy);
 
-			_thread = new Thread(ThreadLoop) { Name = typeof(RabbitAsyncPublisher).Name };
+			_thread = new Thread(ThreadLoop) {Name = typeof (RabbitAsyncPublisher).Name};
 			_thread.Start();
 		}
 
@@ -28,16 +27,18 @@ namespace RabbitMQ.Async
 		{
 			_queue.CompleteAdding();
 			_thread.Join();
+			_connectionHolder.Dispose();
 			_queue.Dispose();
 		}
 
 		public Task PublishAsync(string exchange, byte[] body, string routingKey = "")
 		{
 			var tcs = new TaskCompletionSource<object>();
-			_queue.Add(new EnqueuedMessage {
-				Exchange = exchange, 
-				Body = body, 
-				RoutingKey = routingKey, 
+			_queue.Add(new EnqueuedMessage
+			{
+				Exchange = exchange,
+				Body = body,
+				RoutingKey = routingKey,
 				Tcs = tcs
 			});
 			return tcs.Task;
@@ -45,8 +46,6 @@ namespace RabbitMQ.Async
 
 		private void ThreadLoop()
 		{
-			IConnection connection = null;
-			IModel channel = null;
 			foreach (var msg in _queue.GetConsumingEnumerable())
 			{
 				if (_queue.IsAddingCompleted)
@@ -57,57 +56,19 @@ namespace RabbitMQ.Async
 				{
 					try
 					{
-						EnsureConnected(ref connection, ref channel);
-						IBasicProperties basicProperties = channel.CreateBasicProperties();
-						basicProperties.SetPersistent(true);
-						_confirmStrategy.Publishing(channel);
-						channel.BasicPublish(msg.Exchange, msg.RoutingKey, basicProperties, msg.Body);
-						_confirmStrategy.Published(msg.Tcs);
+						_connectionHolder.WithChan(chan => {
+							var basicProperties = chan.CreateBasicProperties();
+							basicProperties.SetPersistent(true);
+							_confirmStrategy.Publishing(chan);
+							chan.BasicPublish(msg.Exchange, msg.RoutingKey, basicProperties, msg.Body);
+							_confirmStrategy.Published(msg.Tcs);
+						});
 					}
 					catch (Exception e)
 					{
 						msg.Tcs.TrySetException(e);
-						SafeDispose(ref connection, ref channel);
 					}
 				}
-			}
-			SafeDispose(ref connection, ref channel);
-		}
-
-		private void EnsureConnected(ref IConnection connection, ref IModel channel)
-		{
-			if (connection == null || !connection.IsOpen || channel == null || channel.IsClosed)
-			{
-				SafeDispose(ref connection, ref channel);
-				connection = _connectionFactory.CreateConnection();
-				channel = connection.CreateModel();
-				_confirmStrategy.ChannelCreated(channel);
-			}
-		}
-
-		private void SafeDispose(ref IConnection connection, ref IModel channel)
-		{
-			if (channel != null)
-			{
-				try
-				{
-					channel.Dispose();
-				}
-				catch
-				{
-				}
-				channel = null;
-			}
-			if (connection != null)
-			{
-				try
-				{
-					connection.Dispose();
-				}
-				catch
-				{
-				}
-				connection = null;
 			}
 		}
 

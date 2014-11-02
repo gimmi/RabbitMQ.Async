@@ -117,5 +117,21 @@ namespace RabbitMQ.Async.Tests
                 "M3"
             }));
 		}
+
+		[Test, Explicit]
+		public void Should_send_from_multiple_thread_with_no_confirm()
+		{
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory(), false);
+
+			var tasks = Enumerable.Range(0, 10000)
+				.Select(i => sut.PublishAsync(Exchange, _message))
+				.ToArray();
+
+			Assert.That(tasks.Count(x => x.IsCompleted), Is.LessThan(10));
+
+			Task.WaitAll(tasks);
+
+			Assert.That(tasks.Count(x => x.IsCompleted), Is.EqualTo(10000));
+		}
 	}
 }
