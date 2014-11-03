@@ -51,24 +51,17 @@ namespace RabbitMQ.Async
 				if (_queue.IsAddingCompleted)
 				{
 					msg.Tcs.TrySetCanceled();
+					continue;
 				}
-				else
-				{
-					try
-					{
-						_connectionHolder.WithChan(chan => {
-							var basicProperties = chan.CreateBasicProperties();
-							basicProperties.SetPersistent(true);
-							_confirmStrategy.Publishing(chan);
-							chan.BasicPublish(msg.Exchange, msg.RoutingKey, basicProperties, msg.Body);
-							_confirmStrategy.Published(msg.Tcs);
-						});
-					}
-					catch (Exception e)
-					{
-						msg.Tcs.TrySetException(e);
-					}
-				}
+				_connectionHolder.Try(ch => {
+					var basicProperties = ch.CreateBasicProperties();
+					basicProperties.SetPersistent(true);
+					_confirmStrategy.Publishing(ch);
+					ch.BasicPublish(msg.Exchange, msg.RoutingKey, basicProperties, msg.Body);
+					_confirmStrategy.Published(msg.Tcs);
+				}, ex => {
+					msg.Tcs.TrySetException(ex);
+				});
 			}
 		}
 

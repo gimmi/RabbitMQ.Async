@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using RabbitMQ.Client;
 
 namespace RabbitMQ.Async
@@ -16,8 +17,9 @@ namespace RabbitMQ.Async
 			_connectionFactories = Shuffle(connectionFactories);
 		}
 
-		public void WithChan(Action<IModel> action)
+		public void Try(Action<IModel> action, Action<AggregateException> failureAction)
 		{
+			var exceptions = new List<Exception>();
 			int next = 0;
 			try
 			{
@@ -27,12 +29,13 @@ namespace RabbitMQ.Async
 				}
 				action.Invoke(_chan);
 			}
-			catch
+			catch(Exception ex)
 			{
+				exceptions.Add(ex);
 				SafeDispose();
 				if (next >= _connectionFactories.Length)
 				{
-					throw;
+					failureAction.Invoke(new AggregateException(exceptions));
 				}
 			}
 		}
