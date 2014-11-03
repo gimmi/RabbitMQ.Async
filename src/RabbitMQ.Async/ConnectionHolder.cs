@@ -17,7 +17,7 @@ namespace RabbitMQ.Async
 			_connectionFactories = Shuffle(connectionFactories);
 		}
 
-		public void Try(Action<IModel> action, Action<AggregateException> failureAction)
+		public void Try(Action<IModel> action, Action<AggregateException> catchAction)
 		{
 			var exceptions = new List<Exception>();
 			var connectionIndex = 0;
@@ -39,7 +39,7 @@ namespace RabbitMQ.Async
 					exceptions.Add(ex);
 					if (connectionIndex >= _connectionFactories.Length)
 					{
-						failureAction.Invoke(new AggregateException(exceptions));
+						catchAction.Invoke(new AggregateException(exceptions));
 						return;
 					}
 				}
