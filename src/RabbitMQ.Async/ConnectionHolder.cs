@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 
 namespace RabbitMQ.Async
 {
-	public class ConnectionHolder : IDisposable
+	internal class ConnectionHolder : IDisposable
 	{
 		private readonly IConfirmStrategy _confirmStrategy;
 		private readonly IConnectionFactory[] _connectionFactories;
@@ -14,21 +14,6 @@ namespace RabbitMQ.Async
 		{
 			_confirmStrategy = confirmStrategy;
 			_connectionFactories = Shuffle(connectionFactories);
-		}
-
-		public static IConnectionFactory[] Shuffle(IConnectionFactory[] inary)
-		{
-			var outary = new IConnectionFactory[inary.Length];
-			inary.CopyTo(outary, 0);
-			var rng = new Random();
-			for (int n = outary.Length; n > 1; n--)
-			{
-				int k = rng.Next(n);
-				var value = outary[k];
-				outary[k] = outary[n-1];
-				outary[n - 1] = value;
-			}
-			return outary;
 		}
 
 		public void WithChan(Action<IModel> action)
@@ -50,6 +35,11 @@ namespace RabbitMQ.Async
 					throw;
 				}
 			}
+		}
+
+		public void Dispose()
+		{
+			SafeDispose();
 		}
 
 		private void Connect(IConnectionFactory connectionFactory)
@@ -86,9 +76,19 @@ namespace RabbitMQ.Async
 			}
 		}
 
-		public void Dispose()
+		internal static IConnectionFactory[] Shuffle(IConnectionFactory[] inary)
 		{
-			SafeDispose();
+			var outary = new IConnectionFactory[inary.Length];
+			inary.CopyTo(outary, 0);
+			var rng = new Random();
+			for (int n = outary.Length; n > 1; n--)
+			{
+				int k = rng.Next(n);
+				var value = outary[k];
+				outary[k] = outary[n - 1];
+				outary[n - 1] = value;
+			}
+			return outary;
 		}
 	}
 }
