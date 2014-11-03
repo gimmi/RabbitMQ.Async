@@ -118,7 +118,7 @@ namespace RabbitMQ.Async.Tests
             }));
 		}
 
-		[Test, Explicit]
+		[Test]
 		public void Should_send_from_multiple_thread_with_no_confirm()
 		{
 			var sut = new RabbitAsyncPublisher(new ConnectionFactory(), false);
