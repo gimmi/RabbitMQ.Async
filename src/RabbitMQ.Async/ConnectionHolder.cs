@@ -20,22 +20,28 @@ namespace RabbitMQ.Async
 		public void Try(Action<IModel> action, Action<AggregateException> failureAction)
 		{
 			var exceptions = new List<Exception>();
-			int next = 0;
-			try
+			var connectionIndex = 0;
+			while (true)
 			{
-				if (_conn == null || _chan == null)
+				try
 				{
-					Connect(_connectionFactories[next++]);
+					if (_conn == null || _chan == null)
+					{
+						SafeDispose();
+						Connect(connectionIndex++);
+					}
+					action.Invoke(_chan);
+					return;
 				}
-				action.Invoke(_chan);
-			}
-			catch(Exception ex)
-			{
-				exceptions.Add(ex);
-				SafeDispose();
-				if (next >= _connectionFactories.Length)
+				catch (Exception ex)
 				{
-					failureAction.Invoke(new AggregateException(exceptions));
+					SafeDispose();
+					exceptions.Add(ex);
+					if (connectionIndex >= _connectionFactories.Length)
+					{
+						failureAction.Invoke(new AggregateException(exceptions));
+						return;
+					}
 				}
 			}
 		}
@@ -45,10 +51,9 @@ namespace RabbitMQ.Async
 			SafeDispose();
 		}
 
-		private void Connect(IConnectionFactory connectionFactory)
+		private void Connect(int connectionIndex)
 		{
-			SafeDispose();
-			_conn = connectionFactory.CreateConnection();
+			_conn = _connectionFactories[connectionIndex].CreateConnection();
 			_chan = _conn.CreateModel();
 			_confirmStrategy.ChannelCreated(_chan);
 		}
