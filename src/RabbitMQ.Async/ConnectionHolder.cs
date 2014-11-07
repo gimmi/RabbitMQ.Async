@@ -19,7 +19,7 @@ namespace RabbitMQ.Async
 
 		public void Try(Action<IModel> action, Action<AggregateException> catchAction)
 		{
-			var exceptions = new List<Exception>();
+			List<Exception> exceptions = null;
 			var connectionIndex = 0;
 			while (true)
 			{
@@ -36,6 +36,7 @@ namespace RabbitMQ.Async
 				catch (Exception ex)
 				{
 					SafeDispose();
+					exceptions = exceptions ?? new List<Exception>();
 					exceptions.Add(ex);
 					if (connectionIndex >= _connectionFactories.Length)
 					{
