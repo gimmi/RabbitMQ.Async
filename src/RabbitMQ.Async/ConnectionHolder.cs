@@ -11,7 +11,7 @@ namespace RabbitMQ.Async
 		private IConnection _conn;
 		private IModel _chan;
 
-		internal ConnectionHolder(IConnectionFactory[] connectionFactories,IConfirmStrategy confirmStrategy)
+		internal ConnectionHolder(IConnectionFactory[] connectionFactories, IConfirmStrategy confirmStrategy)
 		{
 			_confirmStrategy = confirmStrategy;
 			_connectionFactories = Shuffle(connectionFactories);
@@ -84,9 +84,9 @@ namespace RabbitMQ.Async
 			}
 		}
 
-		internal static IConnectionFactory[] Shuffle(IConnectionFactory[] inary)
+		internal static T[] Shuffle<T>(T[] inary)
 		{
-			var outary = new IConnectionFactory[inary.Length];
+			var outary = new T[inary.Length];
 			inary.CopyTo(outary, 0);
 			var rng = new Random();
 			for (int n = outary.Length; n > 1; n--)

@@ -16,3 +16,6 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("e3c67340-c235-4735-889a-ecea6aad4c11")]
+
+[assembly: InternalsVisibleTo("RabbitMQ.Async.Tests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
