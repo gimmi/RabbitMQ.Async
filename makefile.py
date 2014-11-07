@@ -55,6 +55,7 @@ def nuget_pack():
         <licenseUrl>https://raw.githubusercontent.com/gimmi/RabbitMQ.Async/master/LICENSE</licenseUrl>
         <projectUrl>https://github.com/gimmi/RabbitMQ.Async</projectUrl>
         <tags>RabbitMQ Client AMQP TPL Task Parallel Message Bus Event</tags>
+        <iconUrl>https://raw.githubusercontent.com/gimmi/RabbitMQ.Async/master/icon.png</iconUrl>
         <dependencies>
             <dependency id="RabbitMQ.Client" version="3.4.0" />
         </dependencies>
