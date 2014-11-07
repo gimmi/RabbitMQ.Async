@@ -9,7 +9,6 @@ prerelease = True
 build_vcs_number = 'n/a'
 project_name = 'RabbitMQ.Async'
 project_authors = 'Gherardi Gian Marco'
-project_description = 'RabbitMQ.Async'
 
 default = ['init']
 init = ['install_deps', 'assembly_info']
@@ -52,7 +51,10 @@ def nuget_pack():
         <version>{version}</version>
         <authors>{authors}</authors>
         <owners>{authors}</owners>
-        <description>{description}</description>
+        <description>RabbitMQ.Async is a thin wrapper over the official RabbitMQ.Client library that provide integration with Microsoft TPL</description>
+        <licenseUrl>https://raw.githubusercontent.com/gimmi/RabbitMQ.Async/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/gimmi/RabbitMQ.Async</projectUrl>
+        <tags>RabbitMQ Client AMQP TPL Task Parallel Message Bus Event</tags>
         <dependencies>
             <dependency id="RabbitMQ.Client" version="3.4.0" />
         </dependencies>
@@ -62,7 +64,7 @@ def nuget_pack():
         <file src="{id}\\**\\*.cs" target="src" />
     </files>
 </package>
-    """.format(id=project_name, version=nuget_version(), authors=project_authors, description=project_description, release_notes=dotnet.git_tfs_release_notes(bjoin('.git')), cfg=build_configuration)
+    """.format(id=project_name, version=nuget_version(), authors=project_authors, release_notes=dotnet.git_tfs_release_notes(bjoin('.git')), cfg=build_configuration)
 
     nuspec_file = bjoin('src', 'Package.nuspec')
 
