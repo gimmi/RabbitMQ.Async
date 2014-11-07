@@ -4,9 +4,8 @@ import codecs
 
 build_configuration = 'Release'
 build_platform = 'Any CPU'
-project_version = '0.1.0'
+project_version = '0.2.0'
 prerelease = True
-build_number = 0
 build_vcs_number = 'n/a'
 project_name = 'RabbitMQ.Async'
 project_authors = 'Gherardi Gian Marco'
@@ -26,7 +25,7 @@ def assembly_info():
     dotnet.assembly_info(
         bjoin('src', 'SharedAssemblyInfo.cs'),
         AssemblyProduct=project_name,
-        AssemblyCopyright='',
+        AssemblyCopyright=project_authors,
         AssemblyTrademark='',
         AssemblyCompany=project_authors,
         AssemblyConfiguration='%s|%s' % (build_configuration, build_platform),
@@ -74,13 +73,13 @@ def nuget_pack():
 
 
 def nuget_push():
-    dotnet.nuget_push(bjoin(project_name + '.' + nuget_version() + '.symbols.nupkg'))
+    dotnet.nuget_push(bjoin(project_name + '.' + nuget_version() + '.nupkg'))
 
 
 def nuget_version():
     ret = project_version
     if prerelease:
-        ret += '-b%06d' % build_number
+        ret += '-pre'
     return ret
 
 
