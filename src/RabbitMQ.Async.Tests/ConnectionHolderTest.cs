@@ -30,29 +30,13 @@ namespace RabbitMQ.Async.Tests
 		[Test]
 		public void Should_shuffle_connections()
 		{
-			var actual = ConnectionHolder.Shuffle(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 });
-			Assert.That(actual, Is.EquivalentTo(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 }));
+			var actual = ConnectionHolder.Shuffle(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 });
+			Assert.That(actual, Is.EquivalentTo(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 }));
+			Assert.That(actual, Is.Not.EqualTo(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 }));
 		}
 
 		[Test]
-		public void Should_invoke_action_with_the_first_channel()
-		{
-			var conn = new Mock<IConnection>();
-			var chan = new Mock<IModel>();
-			_connectionFactory1.Setup(x => x.CreateConnection()).Returns(conn.Object);
-			conn.Setup(x => x.CreateModel()).Returns(chan.Object);
-
-			IModel passedChan = null;
-			Exception passedExc = null;
-			_sut.Try(c => passedChan = c, e => passedExc = e);
-
-			Assert.That(passedChan, Is.SameAs(chan.Object));
-			Assert.That(passedExc, Is.Null);
-			_confirmStrategy.Verify(x => x.ChannelCreated(chan.Object));
-		}
-
-		[Test]
-		public void Should_invoke_action_with_the_last_channel()
+		public void Should_invoke_action_with_the_working_channel()
 		{
 			_connectionFactory1.Setup(x => x.CreateConnection()).Throws<Exception>();
 
@@ -79,12 +63,9 @@ namespace RabbitMQ.Async.Tests
 		{
 			_connectionFactory1.Setup(x => x.CreateConnection()).Throws<Exception>();
 
-			var conn2 = new Mock<IConnection>();
-			_connectionFactory2.Setup(x => x.CreateConnection()).Returns(conn2.Object);
-			conn2.Setup(x => x.CreateModel()).Throws<Exception>();
+			_connectionFactory2.Setup(x => x.CreateConnection()).Throws<Exception>();
 			
 			var conn3 = new Mock<IConnection>();
-			var chan3 = new Mock<IModel>();
 			_connectionFactory3.Setup(x => x.CreateConnection()).Returns(conn3.Object);
 			conn3.Setup(x => x.CreateModel()).Throws<Exception>();
 
