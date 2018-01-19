@@ -34,8 +34,7 @@ namespace RabbitMQ.Async
 		public Task PublishAsync(string exchange, byte[] body, string routingKey = "")
 		{
 			var tcs = new TaskCompletionSource<object>();
-			_queue.Add(new EnqueuedMessage
-			{
+			_queue.Add(new EnqueuedMessage {
 				Exchange = exchange,
 				Body = body,
 				RoutingKey = routingKey,

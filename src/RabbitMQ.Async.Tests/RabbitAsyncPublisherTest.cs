@@ -33,7 +33,6 @@ namespace RabbitMQ.Async.Tests
 			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri });
 
 			var tasks = Enumerable.Range(0, 10000)
-				.AsParallel()
 				.Select(i => sut.PublishAsync(Exchange, _message))
 				.ToArray();
 
