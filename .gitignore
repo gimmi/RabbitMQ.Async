@@ -8,6 +8,9 @@
 # ReSharper stuff
 /src/_ReSharper.*
 
+# Rider stuff
+/src/.idea/
+
 # Managed by NuGet
 /packages/
 
