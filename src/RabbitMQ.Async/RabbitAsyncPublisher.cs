@@ -19,7 +19,7 @@ namespace RabbitMQ.Async
 			_confirmStrategy = publisherConfirms ? (IConfirmStrategy) new AckNackConfirmStrategy() : new NoConfirmStrategy();
 			_connectionHolder = new ConnectionHolder(new[] {connectionFactory}, _confirmStrategy);
 
-			_thread = new Thread(ThreadLoop) {Name = typeof (RabbitAsyncPublisher).Name};
+			_thread = new Thread(ThreadLoop) {Name = nameof(RabbitAsyncPublisher)};
 			_thread.Start();
 		}
 

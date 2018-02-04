@@ -19,6 +19,7 @@ namespace RabbitMQ.Async
 
 		public void ChannelCreated(IModel channel)
 		{
+			UnackPending();
 			channel.ConfirmSelect();
 			channel.BasicAcks += BasicAcks;
 			channel.BasicNacks += BasicNacks;
@@ -37,10 +38,9 @@ namespace RabbitMQ.Async
 
 		private void BasicNacks(IModel model, BasicNackEventArgs args)
 		{
-			foreach (ulong seqNo in GetSeqNos(args.DeliveryTag, args.Multiple))
+			foreach (var seqNo in _pending.Keys)
 			{
-				TaskCompletionSource<object> tcs;
-				if (_pending.TryRemove(seqNo, out tcs))
+				if (IsMatch(args.DeliveryTag, args.Multiple, seqNo) && _pending.TryRemove(seqNo, out var tcs))
 				{
 					tcs.TrySetException(new RabbitNackException());
 				}
@@ -49,23 +49,18 @@ namespace RabbitMQ.Async
 
 		private void BasicAcks(IModel model, BasicAckEventArgs args)
 		{
-			foreach (ulong seqNo in GetSeqNos(args.DeliveryTag, args.Multiple))
+			foreach (var seqNo in _pending.Keys)
 			{
-				TaskCompletionSource<object> tcs;
-				if (_pending.TryRemove(seqNo, out tcs))
+				if (IsMatch(args.DeliveryTag, args.Multiple, seqNo) && _pending.TryRemove(seqNo, out var tcs))
 				{
 					tcs.TrySetResult(null);
 				}
 			}
 		}
 
-		private IEnumerable<ulong> GetSeqNos(ulong deliveryTag, bool multiple)
+		private static bool IsMatch(ulong deliveryTag, bool multiple, ulong seqNo)
 		{
-			if (multiple)
-			{
-				return _pending.Keys.Where(x => x <= deliveryTag);
-			}
-			return new[] { deliveryTag };
+			return multiple ? seqNo <= deliveryTag : seqNo == deliveryTag;
 		}
 
 		private void ModelShutdown(IModel channel, ShutdownEventArgs reason)
@@ -73,10 +68,16 @@ namespace RabbitMQ.Async
 			channel.BasicAcks -= BasicAcks;
 			channel.BasicNacks -= BasicNacks;
 			channel.ModelShutdown -= ModelShutdown;
-			foreach (var kvp in _pending)
+			UnackPending();
+		}
+
+		private void UnackPending()
+		{
+			foreach (var tcs in _pending.Values)
 			{
-				kvp.Value.TrySetException(new RabbitUnackException());
+				tcs.TrySetException(new RabbitUnackException());
 			}
+
 			_pending.Clear();
 		}
 	}

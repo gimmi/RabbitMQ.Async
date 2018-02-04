@@ -42,7 +42,7 @@ namespace RabbitMQ.Async.Tests
 
 			var messages = TestUtils.GetAllMessages(Exchange).ToArray();
 			Assert.That(messages, Has.Length.EqualTo(10000));
-			Assert.That(tasks.All(x => x.IsCompleted), Is.True);
+			Assert.That(tasks.Select(x => x.Status), Is.All.EqualTo(TaskStatus.RanToCompletion));
 		}
 
 		[Test]
@@ -60,9 +60,10 @@ namespace RabbitMQ.Async.Tests
 
 			sut.Dispose();
 
+			Assert.That(tasks.Count(x => x.IsCompleted), Is.EqualTo(10000));
 			Assert.That(tasks.Count(x => x.IsCanceled), Is.LessThan(10000));
 			Assert.That(tasks.Count(x => x.IsFaulted), Is.EqualTo(0));
-			Assert.That(tasks.Count(x => x.IsCompleted), Is.EqualTo(10000));
+
 		}
 
 		[Test]
