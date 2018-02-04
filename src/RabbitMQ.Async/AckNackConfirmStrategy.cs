@@ -23,7 +23,6 @@ namespace RabbitMQ.Async
 			channel.ConfirmSelect();
 			channel.BasicAcks += BasicAcks;
 			channel.BasicNacks += BasicNacks;
-			channel.ModelShutdown += ModelShutdown;
 		}
 
 		public void Publishing(IModel channel)
@@ -34,6 +33,11 @@ namespace RabbitMQ.Async
 		public void Published(TaskCompletionSource<object> tcs)
 		{
 			_pending[_publishSeqNo] = tcs;
+		}
+
+		public void Dispose()
+		{
+			UnackPending();
 		}
 
 		private void BasicNacks(IModel model, BasicNackEventArgs args)
@@ -61,14 +65,6 @@ namespace RabbitMQ.Async
 		private static bool IsMatch(ulong deliveryTag, bool multiple, ulong seqNo)
 		{
 			return multiple ? seqNo <= deliveryTag : seqNo == deliveryTag;
-		}
-
-		private void ModelShutdown(IModel channel, ShutdownEventArgs reason)
-		{
-			channel.BasicAcks -= BasicAcks;
-			channel.BasicNacks -= BasicNacks;
-			channel.ModelShutdown -= ModelShutdown;
-			UnackPending();
 		}
 
 		private void UnackPending()

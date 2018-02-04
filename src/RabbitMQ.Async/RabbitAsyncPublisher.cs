@@ -9,17 +9,13 @@ namespace RabbitMQ.Async
 	public class RabbitAsyncPublisher : IDisposable
 	{
 		private readonly BlockingCollection<EnqueuedMessage> _queue;
-		private readonly IConfirmStrategy _confirmStrategy;
 		private readonly Thread _thread;
-		private readonly ConnectionHolder _connectionHolder;
 
 		public RabbitAsyncPublisher(IConnectionFactory connectionFactory, bool publisherConfirms = true)
 		{
 			_queue = new BlockingCollection<EnqueuedMessage>();
-			_confirmStrategy = publisherConfirms ? (IConfirmStrategy) new AckNackConfirmStrategy() : new NoConfirmStrategy();
-			_connectionHolder = new ConnectionHolder(new[] {connectionFactory}, _confirmStrategy);
 
-			_thread = new Thread(ThreadLoop) {Name = nameof(RabbitAsyncPublisher)};
+			_thread = new Thread(() => ThreadLoop(connectionFactory, publisherConfirms)) {Name = nameof(RabbitAsyncPublisher)};
 			_thread.Start();
 		}
 
@@ -27,7 +23,6 @@ namespace RabbitMQ.Async
 		{
 			_queue.CompleteAdding();
 			_thread.Join();
-			_connectionHolder.Dispose();
 			_queue.Dispose();
 		}
 
@@ -43,25 +38,31 @@ namespace RabbitMQ.Async
 			return tcs.Task;
 		}
 
-		private void ThreadLoop()
+		private void ThreadLoop(IConnectionFactory connectionFactory, bool publisherConfirms)
 		{
+			var confirmStrategy = publisherConfirms ? (IConfirmStrategy) new AckNackConfirmStrategy() : new NoConfirmStrategy();
+			var connectionHolder = new ConnectionHolder(new[] {connectionFactory}, confirmStrategy);
+
 			foreach (var msg in _queue.GetConsumingEnumerable())
 			{
 				if (_queue.IsAddingCompleted)
 				{
-					msg.Tcs.TrySetCanceled();
+					msg.Tcs.TrySetException(new RabbitUnackException());
 					continue;
 				}
-				_connectionHolder.Try(ch => {
+				connectionHolder.Try(ch => {
 					var basicProperties = ch.CreateBasicProperties();
 					basicProperties.SetPersistent(true);
-					_confirmStrategy.Publishing(ch);
+					confirmStrategy.Publishing(ch);
 					ch.BasicPublish(msg.Exchange, msg.RoutingKey, basicProperties, msg.Body);
-					_confirmStrategy.Published(msg.Tcs);
+					confirmStrategy.Published(msg.Tcs);
 				}, ex => {
 					msg.Tcs.TrySetException(ex);
 				});
 			}
+
+			connectionHolder.Dispose();
+			confirmStrategy.Dispose();
 		}
 
 		private class EnqueuedMessage

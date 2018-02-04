@@ -38,11 +38,11 @@ namespace RabbitMQ.Async.Tests
 
 			Task.WaitAll(tasks);
 
-			sut.Dispose();
-
 			var messages = TestUtils.GetAllMessages(Exchange).ToArray();
 			Assert.That(messages, Has.Length.EqualTo(10000));
 			Assert.That(tasks.Select(x => x.Status), Is.All.EqualTo(TaskStatus.RanToCompletion));
+
+			sut.Dispose();
 		}
 
 		[Test]
@@ -50,20 +50,24 @@ namespace RabbitMQ.Async.Tests
 		{
 			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = Uri });
 
-			var tasks = new Task[10000];
-			for (int i = 0; i < tasks.Length; i++)
-			{
-				tasks[i] = sut.PublishAsync(Exchange, _message);
-			}
+			var tasks = Enumerable.Range(0, 10000)
+				.Select(i => sut.PublishAsync(Exchange, _message))
+				.ToArray();
 
 			Assert.That(tasks.Count(x => x.IsCompleted), Is.LessThan(10));
 
 			sut.Dispose();
 
 			Assert.That(tasks.Count(x => x.IsCompleted), Is.EqualTo(10000));
-			Assert.That(tasks.Count(x => x.IsCanceled), Is.LessThan(10000));
-			Assert.That(tasks.Count(x => x.IsFaulted), Is.EqualTo(0));
+			var ranToCompletionTasks = tasks.Where(x => x.Status == TaskStatus.RanToCompletion).ToList();
+			var faultedTasks = tasks.Where(x => x.Status == TaskStatus.Faulted).ToList();
+			Assert.That(ranToCompletionTasks.Count + faultedTasks.Count, Is.EqualTo(10000));
 
+			Assert.That(ranToCompletionTasks, Has.Count.LessThan(10));
+			Assert.That(faultedTasks, Has.Count.GreaterThan(9990));
+
+			var exceptions = faultedTasks.SelectMany(x => x.Exception?.InnerExceptions).ToList();
+			Assert.That(exceptions, Is.All.InstanceOf<RabbitUnackException>());
 		}
 
 		[Test]

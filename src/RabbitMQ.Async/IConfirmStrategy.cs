@@ -1,9 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using RabbitMQ.Client;
 
 namespace RabbitMQ.Async
 {
-	internal interface IConfirmStrategy
+	internal interface IConfirmStrategy : IDisposable
 	{
 		void ChannelCreated(IModel channel);
 		void Publishing(IModel channel);

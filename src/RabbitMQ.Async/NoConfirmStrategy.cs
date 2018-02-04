@@ -21,5 +21,9 @@ namespace RabbitMQ.Async
 		{
 			tcs.SetResult(null);
 		}
+
+		public void Dispose()
+		{
+		}
 	}
 }
