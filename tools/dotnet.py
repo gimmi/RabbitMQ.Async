@@ -6,6 +6,8 @@ import clr
 import System
 
 framework_version = '4.0.30319'
+vs_version = '15.0'
+vswhere_version = '2.3.2'
 nunit_version = '2.6.2'
 nugetcheck_version = '0.1.8'
 sqlmigrator_version = '0.9.1'
@@ -17,7 +19,15 @@ base_dir = os.path.join(os.path.dirname(__file__))
 
 
 def msbuild(project_path, *targets, **properties):
-    msbuild_path = os.path.join(os.environ['SystemRoot'], 'Microsoft.NET', 'Framework', 'v' + framework_version, 'MSBuild.exe')
+    nuget_install('vswhere', '-Version', vswhere_version, '-OutputDirectory', base_dir)
+    vs_path = subprocess.check_output([
+        os.path.join(base_dir, 'vswhere.' + vswhere_version, 'tools', 'vswhere.exe'),
+        '-latest',
+        '-requires', 'Microsoft.Component.MSBuild',
+        '-property', 'installationPath',
+        '-version', vs_version
+    ]).rstrip()
+    msbuild_path = os.path.join(vs_path, 'MSBuild', vs_version, 'Bin', 'MSBuild.exe')
     call_args = [msbuild_path, project_path, '/verbosity:minimal', '/nologo']
     if targets:
         call_args.append('/t:' + ';'.join(targets))
@@ -30,7 +40,7 @@ def nuget_restore(*args):
 
 
 def nuget_install(*args):
-    subprocess.check_call([os.path.join(base_dir, 'NuGet.exe'), 'install'] + list(args))
+    subprocess.check_call([os.path.join(base_dir, 'NuGet.exe'), 'install', '-Verbosity', 'quiet'] + list(args))
 
 
 def nuget_push(*args):
