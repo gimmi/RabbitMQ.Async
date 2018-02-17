@@ -15,7 +15,7 @@ namespace RabbitMQ.Async.Tests
 	{
 		private static byte[] _message;
 		private const string Exchange = "test-rabbit-utils";
-		private const string Uri = "amqp://localhost:5672/";
+		private static readonly Uri Uri = new Uri("amqp://localhost:5672/");
 
 		[SetUp]
 		public void SetUp()
@@ -73,7 +73,7 @@ namespace RabbitMQ.Async.Tests
 		[Test]
 		public void Should_fail_task_when_fail_send()
 		{
-			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = "amqp://fake:5672/" });
+			var sut = new RabbitAsyncPublisher(new ConnectionFactory { Uri = new Uri("amqp://fake:5672/") });
 			try
 			{
 				sut.PublishAsync(Exchange, _message).Wait();

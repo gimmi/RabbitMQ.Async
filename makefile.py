@@ -4,7 +4,7 @@ import codecs
 
 build_configuration = 'Release'
 build_platform = 'Any CPU'
-project_version = '0.2.0'
+project_version = '0.3.0'
 prerelease = True
 build_vcs_number = 'n/a'
 project_name = 'RabbitMQ.Async'
@@ -57,11 +57,11 @@ def nuget_pack():
         <tags>RabbitMQ Client AMQP TPL Task Parallel Message Bus Event</tags>
         <iconUrl>https://raw.githubusercontent.com/gimmi/RabbitMQ.Async/master/icon.png</iconUrl>
         <dependencies>
-            <dependency id="RabbitMQ.Client" version="3.4.0" />
+            <dependency id="RabbitMQ.Client" version="5.0.1" />
         </dependencies>
     </metadata>
     <files>
-        <file src="{id}\\bin\\{cfg}\\{id}.*" target="lib\\net40" />
+        <file src="{id}\\bin\\{cfg}\\{id}.*" target="lib\\net451" />
         <file src="{id}\\**\\*.cs" target="src" />
     </files>
 </package>

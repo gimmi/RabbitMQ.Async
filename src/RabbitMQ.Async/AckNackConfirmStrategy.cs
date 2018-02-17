@@ -40,7 +40,7 @@ namespace RabbitMQ.Async
 			UnackPending();
 		}
 
-		private void BasicNacks(IModel model, BasicNackEventArgs args)
+		private void BasicNacks(object sender, BasicNackEventArgs args)
 		{
 			foreach (var seqNo in _pending.Keys)
 			{
@@ -51,7 +51,7 @@ namespace RabbitMQ.Async
 			}
 		}
 
-		private void BasicAcks(IModel model, BasicAckEventArgs args)
+		private void BasicAcks(object sender, BasicAckEventArgs args)
 		{
 			foreach (var seqNo in _pending.Keys)
 			{

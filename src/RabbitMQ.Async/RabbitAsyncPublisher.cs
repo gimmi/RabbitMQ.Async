@@ -52,7 +52,7 @@ namespace RabbitMQ.Async
 				}
 				connectionHolder.Try(ch => {
 					var basicProperties = ch.CreateBasicProperties();
-					basicProperties.SetPersistent(true);
+					basicProperties.Persistent = true;
 					confirmStrategy.Publishing(ch);
 					ch.BasicPublish(msg.Exchange, msg.RoutingKey, basicProperties, msg.Body);
 					confirmStrategy.Published(msg.Tcs);
