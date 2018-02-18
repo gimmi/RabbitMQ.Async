@@ -136,6 +136,8 @@ namespace RabbitMQ.Async.Tests
 			Task.WaitAll(tasks);
 
 			Assert.That(tasks.Count(x => x.IsCompleted), Is.EqualTo(10000));
+
+			sut.Dispose();
 		}
 	}
 }
