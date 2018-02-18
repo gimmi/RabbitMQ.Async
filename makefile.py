@@ -9,15 +9,12 @@ prerelease = True
 build_vcs_number = 'n/a'
 project_name = 'RabbitMQ.Async'
 project_authors = 'Gherardi Gian Marco'
+target_framework_moniker = 'net451'
 
 default = ['init']
-init = ['install_deps', 'assembly_info']
+init = ['assembly_info']
 build = ['init', 'compile', 'test', 'nuget_pack']
 release = ['build', 'nuget_push']
-
-
-def install_deps():
-    dotnet.nuget_restore(bjoin('src', project_name + '.sln'))
 
 
 def assembly_info():
@@ -35,11 +32,14 @@ def assembly_info():
 
 
 def compile():
-    dotnet.msbuild(bjoin('src', project_name + '.sln'), 'Rebuild', Configuration=build_configuration, Platform=build_platform)
+    dotnet.msbuild(bjoin('src', project_name + '.sln'), 'Restore', 'Rebuild', Configuration=build_configuration, Platform=build_platform)
 
 
 def test():
-    dotnet.nunit('src/*/bin/' + build_configuration + '/*.Tests.dll')
+    dotnet.nunit('src/*/bin/{cfg}/{tfm}/*.Tests.dll'.format(
+        cfg=build_configuration,
+        tfm=target_framework_moniker
+    ))
 
 
 def nuget_pack():
@@ -61,11 +61,11 @@ def nuget_pack():
         </dependencies>
     </metadata>
     <files>
-        <file src="{id}\\bin\\{cfg}\\{id}.*" target="lib\\net451" />
+        <file src="{id}\\bin\\{cfg}\\{id}.*" target="lib\\{tfm}" />
         <file src="{id}\\**\\*.cs" target="src" />
     </files>
 </package>
-    """.format(id=project_name, version=nuget_version(), authors=project_authors, release_notes=dotnet.git_tfs_release_notes(bjoin('.git')), cfg=build_configuration)
+    """.format(id=project_name, version=nuget_version(), authors=project_authors, release_notes=dotnet.git_tfs_release_notes(bjoin('.git')), cfg=build_configuration, tfm=target_framework_moniker)
 
     nuspec_file = bjoin('src', 'Package.nuspec')
 
