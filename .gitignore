@@ -1,18 +1,13 @@
 # Visual Studio stuff
-/src/*.user
-/src/*.suo
+/src/.vs/
 /src/*/bin/
 /src/*/obj/
-/src/*/*.user
 
 # ReSharper stuff
 /src/_ReSharper.*
 
 # Rider stuff
 /src/.idea/
-
-# Managed by NuGet
-/packages/
 
 # build related
 /tools/*/
