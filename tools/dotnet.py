@@ -4,6 +4,7 @@ import subprocess
 import re
 import clr
 import System
+import codecs
 
 framework_version = '4.0.30319'
 vs_version = '15.0'
@@ -255,3 +256,13 @@ def wix_candle_light(wsx_path):
         wixobj_path,
         '-out', os.path.join(wsx_dir, wsx_filename + '.msi')
     ])
+
+
+def msbuild_props(filepath, **kwargs):
+    with codecs.open(filepath, 'w', 'utf-8') as f:
+        f.write('<Project>\n')
+        f.write('  <PropertyGroup>\n')
+        f.write('\n'.join(['    <{0}>{1}</{0}>'.format(name, value) for name, value in kwargs.iteritems()]))
+        f.write('\n')
+        f.write('  </PropertyGroup>\n')
+        f.write('</Project>\n')

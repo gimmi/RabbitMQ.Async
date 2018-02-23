@@ -18,16 +18,13 @@ release = ['build', 'nuget_push']
 
 
 def assembly_info():
-    dotnet.assembly_info(
-        bjoin('src', 'SharedAssemblyInfo.cs'),
-        AssemblyProduct=project_name,
-        AssemblyCopyright=project_authors,
-        AssemblyTrademark='',
-        AssemblyCompany=project_authors,
-        AssemblyConfiguration='%s|%s' % (build_configuration, build_platform),
+    dotnet.msbuild_props(bjoin('src', 'Directory.Build.props'),
+        Product=project_name,
+        Copyright=project_authors,
+        Company=project_authors,
         AssemblyVersion=project_version + '.0',
-        AssemblyFileVersion=project_version + '.0',
-        AssemblyInformationalVersion=nuget_version()
+        FileVersion=project_version + '.0',
+        InformationalVersion=nuget_version()
     )
 
 

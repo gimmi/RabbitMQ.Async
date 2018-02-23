@@ -11,7 +11,7 @@
 
 # build related
 /tools/*/
-/src/SharedAssemblyInfo.cs
+/src/Directory.Build.props
 /tools/TestResult.xml
 /src/*.nuspec
 /*.nupkg
