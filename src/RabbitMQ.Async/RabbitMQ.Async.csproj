@@ -1,6 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net451</TargetFramework>
+    <Authors>Gian Marco Gherardi</Authors>
+    <Company>Gian Marco Gherardi</Company>
+    <Description>RabbitMQ.Async is a thin wrapper over the official RabbitMQ.Client library that provide integration with Microsoft TPL</Description>
+    <Copyright>Gian Marco Gherardi</Copyright>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/gimmi/RabbitMQ.Async/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/gimmi/RabbitMQ.Async</PackageProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/gimmi/RabbitMQ.Async/master/icon.png</PackageIconUrl>
+    <PackageTags>RabbitMQ Client AMQP TPL Task Parallel Message Bus Event</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="RabbitMQ.Client" Version="5.0.1" />
