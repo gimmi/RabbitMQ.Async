@@ -1,5 +1,6 @@
 import os
 import dotnet
+import subprocess
 
 build_configuration = 'Release'
 build_platform = 'Any CPU'
@@ -21,10 +22,16 @@ def compile():
 
 
 def test():
-    dotnet.nunit('src/*/bin/{cfg}/{tfm}/*.Tests.dll'.format(
-        cfg=build_configuration,
-        tfm=target_framework_moniker
-    ))
+    # See https://github.com/Microsoft/vstest/issues/1155
+    # See https://github.com/Microsoft/vstest/issues/326
+    dotnet_cli(
+        'msbuild',
+        bjoin('src', project_name + '.sln'),
+        '/t:VSTest',
+        '/p:Configuration=' + build_configuration,
+        '/p:Platform=' + build_platform,
+        '/p:Version=' + nuget_version
+    )
 
 
 def nuget_push():
@@ -34,3 +41,8 @@ def nuget_push():
 def bjoin(*args):
     base_path = os.path.dirname(os.path.realpath(__file__))
     return os.path.join(base_path, *args)
+
+def dotnet_cli(*args):
+    args = list(args)
+    args.insert(0, 'dotnet')
+    subprocess.check_call(args)
